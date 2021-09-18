@@ -26,10 +26,10 @@ jwt = JWTManager(app)
 
 """
 `claims` are data we choose to attach to each jwt payload
-and for each jwt protected endpoint, we can retrieve these claims via `get_jwt_claims()`
+and for each jwt protected endpoint, we can retrieve these claims via `get_jwt()`
 one possible use case for claims are access level control, which is shown below
 """
-@jwt.user_claims_loader
+@jwt.additional_claims_loader
 def add_claims_to_jwt(identity):
     if identity == 1:   # instead of hard-coding, we should read from a config file to get a list of admins instead
         return {'is_admin': True}
@@ -37,15 +37,15 @@ def add_claims_to_jwt(identity):
 
 
 # This method will check if a token is blacklisted, and will be called automatically when blacklist is enabled
-@jwt.token_in_blacklist_loader
-def check_if_token_in_blacklist(decrypted_token):
+@jwt.token_in_blocklist_loader
+def check_if_token_in_blacklist(jwt_header, decrypted_token):
     return decrypted_token['jti'] in BLACKLIST
 
 
 # The following callbacks are used for customizing jwt response/error messages.
 # The original ones may not be in a very pretty format (opinionated)
 @jwt.expired_token_loader
-def expired_token_callback():
+def expired_token_callback(jwt_header, jwt_payload):
     return jsonify({
         'message': 'The token has expired.',
         'error': 'token_expired'
